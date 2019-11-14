@@ -78,6 +78,7 @@
 
                 </dependencies>
 
+
                 <configuration>
                     <driver>${postgresql.driver.name}</driver>
                     <url>jdbc:postgresql://localhost:5432/restaurantdb</url>

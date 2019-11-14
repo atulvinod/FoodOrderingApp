@@ -8,6 +8,7 @@ com\upgrad\FoodOrderingApp\api\model\UpdatePasswordRequest.class
 io\swagger\api\ApiResponseMessage.class
 com\upgrad\FoodOrderingApp\api\model\RestaurantDetailsResponseAddress.class
 com\upgrad\FoodOrderingApp\api\model\CategoryDetailsResponse.class
+com\upgrad\FoodOrderingApp\api\exceptionHandler\RestExceptionHandler.class
 com\upgrad\FoodOrderingApp\api\model\RestaurantDetailsResponse.class
 com\upgrad\FoodOrderingApp\api\model\SaveAddressResponse.class
 com\upgrad\FoodOrderingApp\api\model\ItemList.class
@@ -33,3 +34,4 @@ com\upgrad\FoodOrderingApp\api\model\CategoryList.class
 com\upgrad\FoodOrderingApp\api\model\CategoryListResponse.class
 com\upgrad\FoodOrderingApp\api\model\UpdatePasswordResponse.class
 com\upgrad\FoodOrderingApp\api\model\AddressListState.class
+com\upgrad\FoodOrderingApp\api\controller\CustomerController.class

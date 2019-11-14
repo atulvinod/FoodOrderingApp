@@ -11,4 +11,5 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan("com.upgrad.FoodOrderingApp.service")
 @EntityScan("com.upgrad.FoodOrderingApp.service.entity")
 public class ServiceConfiguration {
+
 }
