@@ -38,4 +38,8 @@ public class CustomerService {
         return userDao.createAddress(addressEntity);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void updateCustomer(CustomerEntity customer){
+        userDao.updateCustomer(customer);
+    }
 }

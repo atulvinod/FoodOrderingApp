@@ -44,6 +44,9 @@ public class UserDao {
         entityManager.persist(addressEntity);
         return addressEntity;
     }
+    public void updateCustomer(CustomerEntity customer){
+        entityManager.merge(customer);
+    }
 
 
 

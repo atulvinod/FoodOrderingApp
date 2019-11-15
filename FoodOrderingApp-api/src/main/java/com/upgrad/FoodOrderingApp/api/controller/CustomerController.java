@@ -4,23 +4,19 @@ import com.upgrad.FoodOrderingApp.api.model.*;
 import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.PasswordCryptographyProvider;
+import com.upgrad.FoodOrderingApp.service.businness.PasswordStrengthService;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.SignUpRestrictedException;
-import io.swagger.annotations.Authorization;
+import com.upgrad.FoodOrderingApp.service.exception.UpdateCustomerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import sun.misc.BASE64Decoder;
-import sun.security.krb5.internal.PAForUserEnc;
 
-import javax.print.attribute.standard.Media;
-import javax.print.attribute.standard.PresentationDirection;
-import javax.xml.ws.Response;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.UUID;
@@ -28,6 +24,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/")
 public class CustomerController {
+
+    @Autowired
+    private PasswordStrengthService passwordStrengthService;
     @Autowired
     private CustomerService customerService;
 
@@ -77,18 +76,12 @@ public class CustomerController {
 
         /**If the password is weak and throw an exception
          */
-
-        if(     //Length check
-                !(password.length()>8) ||
-                //Special Character check
-                !password.matches("(?=.*[~!@#$%^&*()_-]).*") ||
-                //Uppercase check
-                !password.matches("(?=.*[A-Z]).*") ||
-                //Lowercase check
-                !password.matches("(?=.*[0-9]).*")
-        ){
-            throw new SignUpRestrictedException("SGR-004","Weak Password!");
+        if(passwordStrengthService.checkPasswordStrength(password)==false){
+            //TODO: Correct the Error Code
+            throw new SignUpRestrictedException("USE","Weak Password!");
         }
+
+
         if(customerService.getCustomerViaContact(contactNumber)!=null){
             throw new SignUpRestrictedException("SGR-001","This contact number is already registered! Try other contact number.");
         }
@@ -191,11 +184,47 @@ public class CustomerController {
     }
 
     @RequestMapping(method=RequestMethod.PUT,path="/customer/password",produces=MediaType.APPLICATION_JSON_UTF8_VALUE,consumes=MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<UpdatePasswordResponse> passwordUpdate(@RequestHeader("authorization") final String authorization,UpdatePasswordRequest request) throws AuthorizationFailedException {
+    public ResponseEntity<UpdatePasswordResponse> passwordUpdate(@RequestHeader("authorization") final String authorization,UpdatePasswordRequest request) throws AuthorizationFailedException, UpdateCustomerException {
         CustomerAuthTokenEntity authToken = authenticationService.getToken(authorization);
         if(authToken == null){
             throw new AuthorizationFailedException("ATHR-001","Customer is not logged in");
         }
-        return null;
+        //Get the customer
+        CustomerEntity customer = customerService.getCustomerViaId(authToken.getCustomerId());
+
+        //To check if the token is expired
+        if(authToken.getExpiresAt().isBefore(ZonedDateTime.now())){
+            throw new AuthorizationFailedException("ATHR-003","Your session is expired. Log in again to access this endpoint");
+        }
+        //To check if the field is empty
+        if(request.getNewPassword().equals("")||request.getOldPassword().equals("")){
+            throw new UpdateCustomerException("UCR-003","No field should be empty");
+        }
+
+        //To check the strength of password
+        if(passwordStrengthService.checkPasswordStrength(request.getNewPassword())==false){
+            throw new UpdateCustomerException("UCR-001","Weak Password");
+        }
+
+        //To get the old password
+        String oldPassword = cryptographyProvider.encrypt(request.getOldPassword(),customer.getSalt());
+
+        if(!(customer.getPassword().equals(oldPassword))){
+            throw new UpdateCustomerException("UCR-004","Incorrect old password");
+        }
+
+        //if all checks pass, then update the password
+        String[] newPassword = cryptographyProvider.encrypt(request.getNewPassword());
+        customer.setPassword(newPassword[0]);
+        customer.setSalt(newPassword[1]);
+
+        customerService.updateCustomer(customer);
+
+        UpdatePasswordResponse response = new UpdatePasswordResponse();
+        response.setStatus("PASSWORD SUCCESSFULLY CHANGED");
+        response.setId(customer.getUuid());
+
+        //TODO: Check if the Http Status is correct
+        return new ResponseEntity<UpdatePasswordResponse>(response,HttpStatus.CREATED);
     }
 }
