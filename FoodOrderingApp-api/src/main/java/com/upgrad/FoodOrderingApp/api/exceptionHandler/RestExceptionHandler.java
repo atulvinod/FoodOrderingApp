@@ -1,7 +1,9 @@
 package com.upgrad.FoodOrderingApp.api.exceptionHandler;
 
 import com.upgrad.FoodOrderingApp.api.model.ErrorResponse;
+import com.upgrad.FoodOrderingApp.api.model.SaveAddressResponse;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
+import com.upgrad.FoodOrderingApp.service.exception.SaveAddressException;
 import com.upgrad.FoodOrderingApp.service.exception.SignUpRestrictedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,4 +23,10 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorResponse> loginException(AuthorizationFailedException ex,WebRequest req){
         return new ResponseEntity<ErrorResponse>(new ErrorResponse().code(ex.getCode()).message(ex.getErrorMessage()),HttpStatus.UNAUTHORIZED);
     }
+    @ExceptionHandler(SaveAddressException.class)
+    public ResponseEntity<ErrorResponse> addressException(SaveAddressException ex, WebRequest req){
+        return new ResponseEntity<ErrorResponse>(new ErrorResponse().code(ex.getCode()).message(ex.getErrorMessage()),HttpStatus.UNAUTHORIZED);
+    }
+
+
 }

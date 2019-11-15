@@ -1,9 +1,6 @@
 package com.upgrad.FoodOrderingApp.api.controller;
 
-import com.upgrad.FoodOrderingApp.api.model.LoginResponse;
-import com.upgrad.FoodOrderingApp.api.model.LogoutResponse;
-import com.upgrad.FoodOrderingApp.api.model.SignupCustomerRequest;
-import com.upgrad.FoodOrderingApp.api.model.SignupCustomerResponse;
+import com.upgrad.FoodOrderingApp.api.model.*;
 import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.PasswordCryptographyProvider;
@@ -23,6 +20,7 @@ import sun.security.krb5.internal.PAForUserEnc;
 
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.PresentationDirection;
+import javax.xml.ws.Response;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.UUID;
@@ -190,5 +188,14 @@ public class CustomerController {
 
         return new ResponseEntity<LogoutResponse>(response,HttpStatus.OK);
 
+    }
+
+    @RequestMapping(method=RequestMethod.PUT,path="/customer/password",produces=MediaType.APPLICATION_JSON_UTF8_VALUE,consumes=MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<UpdatePasswordResponse> passwordUpdate(@RequestHeader("authorization") final String authorization,UpdatePasswordRequest request) throws AuthorizationFailedException {
+        CustomerAuthTokenEntity authToken = authenticationService.getToken(authorization);
+        if(authToken == null){
+            throw new AuthorizationFailedException("ATHR-001","Customer is not logged in");
+        }
+        return null;
     }
 }
