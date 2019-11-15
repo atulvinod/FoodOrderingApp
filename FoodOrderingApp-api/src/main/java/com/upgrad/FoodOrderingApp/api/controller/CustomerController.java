@@ -1,21 +1,28 @@
 package com.upgrad.FoodOrderingApp.api.controller;
 
+import com.upgrad.FoodOrderingApp.api.model.LoginResponse;
 import com.upgrad.FoodOrderingApp.api.model.SignupCustomerRequest;
 import com.upgrad.FoodOrderingApp.api.model.SignupCustomerResponse;
+import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.PasswordCryptographyProvider;
+import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
+import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.SignUpRestrictedException;
+import io.swagger.annotations.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import sun.misc.BASE64Decoder;
 import sun.security.krb5.internal.PAForUserEnc;
 
+import javax.print.attribute.standard.Media;
+import javax.print.attribute.standard.PresentationDirection;
+import java.util.Base64;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +33,9 @@ public class CustomerController {
 
     @Autowired
     private PasswordCryptographyProvider cryptographyProvider;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     @RequestMapping(method = RequestMethod.POST,path = "/customer/signup",produces = MediaType.APPLICATION_JSON_UTF8_VALUE,consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SignupCustomerResponse> customerSignup(final  SignupCustomerRequest  signupCustomerRequest) throws SignUpRestrictedException {
@@ -105,4 +115,45 @@ public class CustomerController {
         return new ResponseEntity<SignupCustomerResponse>(response, HttpStatus.CREATED);
     }
 
+    @RequestMapping(method = RequestMethod.POST,path = "/customer/login",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LoginResponse> customerLogin(@RequestHeader("authorization") final String authorization) throws AuthorizationFailedException {
+
+        /**Try to decode the Base64 header, if failed , then throw an Exception*/
+        String[] decodedArray;
+        try {
+            byte[] decode = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
+            String decodedText = new String(decode);
+
+            // contactNumber:password
+            decodedArray = decodedText.split(":");
+
+        }catch (Exception e){
+            throw new AuthorizationFailedException("ATH-003","Incorrect format of decoded customer name and password");
+        }
+
+        //Get the token from the authentication Service
+        CustomerAuthTokenEntity token = authenticationService.authenticate(decodedArray[0],decodedArray[1]);
+
+        //Get the entity from the token id
+        CustomerEntity entity = customerService.getCustomerViaId(token.getCustomerId());
+
+        //Create a new Response
+        LoginResponse response  = new LoginResponse();
+        response.setId(entity.getUuid());
+        response.setContactNumber(entity.getContact_number());
+        response.setFirstName(entity.getFirstName());
+        response.setEmailAddress(entity.getEmail());
+        response.setLastName(entity.getLastName());
+        response.setMessage("LOGGED IN SUCCESSFULLY");
+
+        //Create a new header
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("access-token",token.getAccessToken());
+        return new ResponseEntity<LoginResponse>(response,HttpStatus.OK);
+
+
+
+
+
+    }
 }

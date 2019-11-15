@@ -13,6 +13,8 @@ public class CustomerService {
     @Autowired
     UserDao userDao;
 
+
+    @Transactional(propagation = Propagation.REQUIRED)
     public CustomerEntity getCustomerViaContact(String contact){
         CustomerEntity entity = userDao.getCustomerViaContact(contact);
         return entity;
@@ -22,4 +24,12 @@ public class CustomerService {
     public CustomerEntity createCustomer(CustomerEntity entity){
         return userDao.createCustomer(entity);
     }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomerEntity getCustomerViaId(Integer id){
+        CustomerEntity entity = userDao.getCustomerViaId(id);
+        return entity;
+    }
+
+
 }

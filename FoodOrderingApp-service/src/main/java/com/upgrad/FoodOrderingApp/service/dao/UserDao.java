@@ -1,5 +1,6 @@
 package com.upgrad.FoodOrderingApp.service.dao;
 
+import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.exception.CustomerNotFoundException;
 import org.springframework.stereotype.Repository;
@@ -28,4 +29,17 @@ public class UserDao {
             return null;
         }
     }
+    public CustomerEntity getCustomerViaId(final Integer id){
+        try{
+            return entityManager.createNamedQuery("userById", CustomerEntity.class).setParameter("id",id).getSingleResult();
+        }catch(NoResultException e){
+            return null;
+        }
+    }
+
+    public CustomerAuthTokenEntity createAuthToken(CustomerAuthTokenEntity authToken){
+        entityManager.persist(authToken);
+        return authToken;
+    }
+
 }
