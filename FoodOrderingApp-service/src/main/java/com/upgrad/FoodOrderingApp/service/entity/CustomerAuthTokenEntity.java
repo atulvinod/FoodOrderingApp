@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 @NamedQueries({
         @NamedQuery(name = "getTokenViaID",query = "select u from CustomerAuthTokenEntity u where u.id = :id"),
         @NamedQuery(name = "getTokenViaUuid",query = "select u from CustomerAuthTokenEntity u where u.uuid = :uuid"),
+        @NamedQuery(name ="getToken",query = "select u from CustomerAuthTokenEntity u where u.accessToken = :token")
 
 })
 public class CustomerAuthTokenEntity {
@@ -16,7 +17,7 @@ public class CustomerAuthTokenEntity {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy =GenerationType.IDENTITY )
-    private String id;
+    private Integer id;
 
     @Column(name = "uuid")
     private String uuid;
@@ -47,11 +48,11 @@ public class CustomerAuthTokenEntity {
         this.expiresAt = expiresAt;
     }
 
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

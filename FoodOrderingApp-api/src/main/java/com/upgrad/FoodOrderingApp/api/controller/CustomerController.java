@@ -1,6 +1,7 @@
 package com.upgrad.FoodOrderingApp.api.controller;
 
 import com.upgrad.FoodOrderingApp.api.model.LoginResponse;
+import com.upgrad.FoodOrderingApp.api.model.LogoutResponse;
 import com.upgrad.FoodOrderingApp.api.model.SignupCustomerRequest;
 import com.upgrad.FoodOrderingApp.api.model.SignupCustomerResponse;
 import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
@@ -22,6 +23,7 @@ import sun.security.krb5.internal.PAForUserEnc;
 
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.PresentationDirection;
+import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -146,14 +148,47 @@ public class CustomerController {
         response.setLastName(entity.getLastName());
         response.setMessage("LOGGED IN SUCCESSFULLY");
 
+
         //Create a new header
         HttpHeaders headers = new HttpHeaders();
         headers.add("access-token",token.getAccessToken());
-        return new ResponseEntity<LoginResponse>(response,HttpStatus.OK);
+        return new ResponseEntity<LoginResponse>(response,headers,HttpStatus.OK);
+
+    }
+
+    @RequestMapping(method = RequestMethod.POST , path ="/customer/logout",produces = MediaType.APPLICATION_JSON_UTF8_VALUE,consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LogoutResponse> customerLogout(@RequestHeader("authentication") final String authentication) throws AuthorizationFailedException {
+        CustomerAuthTokenEntity token = authenticationService.getToken(authentication);
+        if(token == null){
+            throw new AuthorizationFailedException("ATHR-001","Customer not logged in");
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+
+        //If the user has already logged out, then throw an exception
+        if(token.getLogoutAt() != null ){
+            if(token.getLogoutAt().isBefore(now))
+            throw new AuthorizationFailedException("ATHR-002","Customer is logged out. Log in again to access this endpoint");
+        }
+
+        //If the current time is greater than the expiry time of the token, then throw an exception
+        if(now.isAfter(token.getExpiresAt())){
+            throw new AuthorizationFailedException("ATHR-003","Your session is expired. Log in again to access this endpoint");
+        }
+
+        CustomerEntity customer = customerService.getCustomerViaId(token.getCustomerId());
+        token.setLogoutAt(now);
 
 
 
+        //Update the token
+        authenticationService.updateToken(token);
 
+        //Create a new Response
+        LogoutResponse response = new LogoutResponse();
+        response.setId(customer.getUuid());
+        response.setMessage("LOGGED OUT SUCCESSFULLY");
+
+        return new ResponseEntity<LogoutResponse>(response,HttpStatus.OK);
 
     }
 }

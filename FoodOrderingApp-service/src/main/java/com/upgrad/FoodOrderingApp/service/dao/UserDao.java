@@ -37,9 +37,5 @@ public class UserDao {
         }
     }
 
-    public CustomerAuthTokenEntity createAuthToken(CustomerAuthTokenEntity authToken){
-        entityManager.persist(authToken);
-        return authToken;
-    }
 
 }
