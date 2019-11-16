@@ -1,13 +1,8 @@
 package com.upgrad.FoodOrderingApp.service.dao;
 
-import com.sun.jndi.cosnaming.IiopUrl;
-import com.upgrad.FoodOrderingApp.service.entity.AddressEntity;
-import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
+import com.upgrad.FoodOrderingApp.service.entity.FullAddressEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
-import com.upgrad.FoodOrderingApp.service.entity.StateEntity;
-import com.upgrad.FoodOrderingApp.service.exception.CustomerNotFoundException;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -40,9 +35,9 @@ public class UserDao {
         }
     }
 
-    public AddressEntity createAddress(AddressEntity addressEntity){
-        entityManager.persist(addressEntity);
-        return addressEntity;
+    public FullAddressEntity createAddress(FullAddressEntity fullAddressEntity){
+        entityManager.persist(fullAddressEntity);
+        return fullAddressEntity;
     }
     public void updateCustomer(CustomerEntity customer){
         entityManager.merge(customer);

@@ -1,8 +1,7 @@
 package com.upgrad.FoodOrderingApp.service.businness;
 
-import com.sun.jndi.cosnaming.IiopUrl;
 import com.upgrad.FoodOrderingApp.service.dao.UserDao;
-import com.upgrad.FoodOrderingApp.service.entity.AddressEntity;
+import com.upgrad.FoodOrderingApp.service.entity.FullAddressEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,8 +33,8 @@ public class CustomerService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public AddressEntity createAddress(AddressEntity addressEntity){
-        return userDao.createAddress(addressEntity);
+    public FullAddressEntity createAddress(FullAddressEntity fullAddressEntity){
+        return userDao.createAddress(fullAddressEntity);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

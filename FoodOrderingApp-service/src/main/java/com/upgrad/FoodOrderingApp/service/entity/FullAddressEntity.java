@@ -4,7 +4,10 @@ import javax.persistence.*;
 
 @Entity
 @Table(name="address",schema = "public")
-public class AddressEntity {
+@NamedQueries({
+        @NamedQuery(name="getFullAddressViaAddressUuid",query = "select u from FullAddressEntity u where u.uuid=:uuid")
+})
+public class FullAddressEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="id")

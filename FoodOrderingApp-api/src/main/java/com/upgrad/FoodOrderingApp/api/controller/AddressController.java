@@ -1,17 +1,19 @@
 package com.upgrad.FoodOrderingApp.api.controller;
 
+import com.upgrad.FoodOrderingApp.api.model.DeleteAddressResponse;
 import com.upgrad.FoodOrderingApp.api.model.SaveAddressRequest;
 import com.upgrad.FoodOrderingApp.api.model.SaveAddressResponse;
+import com.upgrad.FoodOrderingApp.service.businness.AddressService;
 import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.StateService;
-import com.upgrad.FoodOrderingApp.service.entity.AddressEntity;
+import com.upgrad.FoodOrderingApp.service.entity.CustomerAddressEntity;
+import com.upgrad.FoodOrderingApp.service.entity.FullAddressEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
 import com.upgrad.FoodOrderingApp.service.entity.StateEntity;
 import com.upgrad.FoodOrderingApp.service.exception.AddressNotFoundException;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.SaveAddressException;
-import org.apache.tomcat.jni.Address;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +37,10 @@ public class AddressController {
 
     @Autowired
     private StateService stateService;
+
+    @Autowired
+    private AddressService addressService;
+
 
     @RequestMapping(method = RequestMethod.POST,path="/address",produces = MediaType.APPLICATION_JSON_UTF8_VALUE,consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SaveAddressResponse> saveAddress(@RequestHeader("authorization") String authorization, final SaveAddressRequest addressRequest) throws AuthorizationFailedException, AddressNotFoundException, SaveAddressException {
@@ -73,7 +79,7 @@ public class AddressController {
             throw new AddressNotFoundException("ANF-001","No state by this id");
         }
 
-        AddressEntity address = new AddressEntity();
+        FullAddressEntity address = new FullAddressEntity();
 
         address.setUuid(UUID.randomUUID().toString());
         address.setCity(addressRequest.getCity());
@@ -82,7 +88,7 @@ public class AddressController {
         address.setPincode(addressRequest.getPincode());
         address.setStateId(stateEntity.getId());
 
-        AddressEntity createdAddress = customerService.createAddress(address);
+        FullAddressEntity createdAddress = customerService.createAddress(address);
         SaveAddressResponse response = new SaveAddressResponse();
         response.setId(createdAddress.getUuid());
         response.setStatus("ADDRESS SUCCESSFULLY REGISTERED");
@@ -91,4 +97,42 @@ public class AddressController {
 
 
     }
+
+    @RequestMapping(method=RequestMethod.DELETE,path="/address/{address_uuid}",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<DeleteAddressResponse> deleteAddress(@RequestHeader("authorization") String authorization,final String addressUuid) throws AuthorizationFailedException {
+        CustomerAuthTokenEntity token = authenticationService.getToken(authorization);
+
+        if(token == null){
+            throw new AuthorizationFailedException("ATHR-001","Customer is not Logged in");
+        }
+        if(token.getLogoutAt()!= null){
+            if(token.getLogoutAt().isAfter(ZonedDateTime.now()))
+                throw new AuthorizationFailedException("ATHR-002","Customer is logged out, Log in again to access this endpoint");
+            else if(token.getExpiresAt().isAfter(ZonedDateTime.now()))
+                throw new AuthorizationFailedException("ATHR-003","Your session is expired. Log in again to access this endpoint.");
+
+        }
+
+        FullAddressEntity fullAddress = addressService.getFullAddressViaAddressUuid(addressUuid);
+        Integer fullAddressId = fullAddress.getId();
+
+        CustomerAddressEntity customerAddress = addressService.getCustomerAddressviaAddressId(fullAddressId.toString());
+        Integer customerId = customerAddress.getCustomerId();
+
+        if(token.getCustomerId()!=customerId){
+            throw new AuthorizationFailedException("ATHR-004","You are not authorized to view/update/delete any one else's address");
+        }
+
+        addressService.deleteFullAddress(fullAddress);
+        DeleteAddressResponse response = new DeleteAddressResponse();
+        response.setId(UUID.fromString(fullAddress.getUuid()));
+        response.setStatus("ADDRESS DELETED SUCCESSFULLY");
+
+        //TODO: Check response code
+        return new ResponseEntity<DeleteAddressResponse>(response,HttpStatus.OK);
+
+
+    }
+
+
 }
