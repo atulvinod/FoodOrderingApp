@@ -20,4 +20,12 @@ public class StateDao {
             return null;
         }
     }
+
+    public StateEntity getStateViaId(String id){
+        try{
+            return entityManager.createNamedQuery("getStateViaId", StateEntity.class).setParameter("id",Integer.parseInt(id)).getSingleResult();
+        }catch(NoResultException e){
+            return null;
+        }
+    }
 }

@@ -1,8 +1,6 @@
 package com.upgrad.FoodOrderingApp.api.controller;
 
-import com.upgrad.FoodOrderingApp.api.model.DeleteAddressResponse;
-import com.upgrad.FoodOrderingApp.api.model.SaveAddressRequest;
-import com.upgrad.FoodOrderingApp.api.model.SaveAddressResponse;
+import com.upgrad.FoodOrderingApp.api.model.*;
 import com.upgrad.FoodOrderingApp.service.businness.AddressService;
 import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
@@ -24,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -93,6 +93,11 @@ public class AddressController {
         response.setId(createdAddress.getUuid());
         response.setStatus("ADDRESS SUCCESSFULLY REGISTERED");
 
+        CustomerAddressEntity customerAddressEntity = new CustomerAddressEntity();
+        customerAddressEntity.setCustomerId(authTokenEntity.getCustomerId());
+        customerAddressEntity.setAddressId(createdAddress.getId());
+        addressService.createCustomerAddress(customerAddressEntity);
+
         return new ResponseEntity<SaveAddressResponse>(response,HttpStatus.OK);
 
 
@@ -134,5 +139,48 @@ public class AddressController {
 
     }
 
+    @RequestMapping(method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_UTF8_VALUE,path="/address/customer")
+    public ResponseEntity<AddressListResponse> getAllAddress(@RequestHeader("authorization") String authorization) throws AuthorizationFailedException {
+        CustomerAuthTokenEntity token = authenticationService.getToken(authorization);
 
+        if(token == null){
+            throw new AuthorizationFailedException("ATHR-001","Customer is not Logged in");
+        }
+        if(token.getLogoutAt()!= null){
+            if(token.getLogoutAt().isAfter(ZonedDateTime.now()))
+                throw new AuthorizationFailedException("ATHR-002","Customer is logged out, Log in again to access this endpoint");
+            else if(token.getExpiresAt().isAfter(ZonedDateTime.now()))
+                throw new AuthorizationFailedException("ATHR-003","Your session is expired. Log in again to access this endpoint.");
+
+        }
+
+        AddressListResponse response = new AddressListResponse();
+        List<AddressList> addressList = new ArrayList<>();
+
+        List<CustomerAddressEntity> customerAddressEntities = addressService.getAllCustomerAddresses(token.getCustomerId().toString());
+        for(CustomerAddressEntity e:customerAddressEntities){
+
+            AddressList address = new AddressList();
+
+            FullAddressEntity fullAddressEntity = addressService.getFullAddressViaAddressId(e.getAddressId().toString());
+            address.setId(UUID.fromString(fullAddressEntity.getUuid()));
+            address.setPincode(fullAddressEntity.getPincode());
+            address.setLocality(fullAddressEntity.getLocality());
+            address.setFlatBuildingName(fullAddressEntity.getFlatBuilNumber());
+            address.setCity(fullAddressEntity.getCity());
+
+            StateEntity stateEntity = stateService.getStateViaId(fullAddressEntity.getStateId().toString());
+            AddressListState state = new AddressListState();
+            state.setStateName(stateEntity.getStateName());
+            state.setId(UUID.fromString(stateEntity.getUuid()));
+
+            address.setState(state);
+
+            addressList.add(address);
+        }
+
+        response.setAddresses(addressList);
+        return new ResponseEntity<AddressListResponse>(response,HttpStatus.OK);
+
+        }
 }

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class AddressService {
 
@@ -31,5 +33,14 @@ public class AddressService {
     public void deleteFullAddress(FullAddressEntity address){
         dao.deleteFullAddress(address);
     }
+
+    public List<CustomerAddressEntity> getAllCustomerAddresses(String address){
+       return dao.getAllCustomersAddresses(address);
+    }
+    public FullAddressEntity getFullAddressViaAddressId(String addressId){
+        return dao.getFullAddressViaAddressId(addressId);
+    }
+
+
 
 }

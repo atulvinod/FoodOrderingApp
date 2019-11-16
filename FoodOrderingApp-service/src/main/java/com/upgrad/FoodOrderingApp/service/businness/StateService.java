@@ -15,4 +15,10 @@ public class StateService {
     public StateEntity getState(String uuid){
         return dao.getState(uuid);
     }
+    @Transactional(propagation = Propagation.REQUIRED)
+    public StateEntity getStateViaId(String id){
+        return dao.getStateViaId(id);
+    }
+
+
 }

@@ -5,7 +5,8 @@ import javax.persistence.*;
 @Entity
 @Table(name="state",schema = "public")
 @NamedQueries({
-        @NamedQuery(name ="getState",query = "select u from StateEntity u where u.uuid=:uuid")
+        @NamedQuery(name ="getState",query = "select u from StateEntity u where u.uuid=:uuid"),
+        @NamedQuery(name ="getStateViaId",query = "select u from StateEntity u where u.id=:id")
 })
 public class StateEntity {
     @Id
