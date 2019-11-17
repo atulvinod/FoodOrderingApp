@@ -28,7 +28,7 @@ public class AddressDao {
     }
     public CustomerAddressEntity getCustomerAddressViaAddressId(String AddressId){
         try{
-            return entityManager.createNamedQuery("getAddressViaAddressId",CustomerAddressEntity.class).setParameter("addressId",Integer.parseInt(AddressId)).getSingleResult();
+            return entityManager.createNamedQuery("getAddressViaAddressId",CustomerAddressEntity.class).setParameter("id",Integer.parseInt(AddressId)).getSingleResult();
         }catch(Exception e){
             e.printStackTrace();
             return null;
