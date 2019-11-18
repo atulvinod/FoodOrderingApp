@@ -6,7 +6,8 @@ import javax.persistence.*;
 @Table(name="category",schema="public")
 @NamedQueries({
         @NamedQuery(name="getCategoryViaId",query="select u from CategoryEntity u where u.id=:id"),
-        @NamedQuery(name="getCategoryViaUuid",query="select u from CategoryEntity u where u.uuid=:uuid")
+        @NamedQuery(name="getCategoryViaUuid",query="select u from CategoryEntity u where u.uuid=:uuid"),
+        @NamedQuery(name="getAllCategories", query = "select u from CategoryEntity u")
 })
 public class CategoryEntity {
     @Id

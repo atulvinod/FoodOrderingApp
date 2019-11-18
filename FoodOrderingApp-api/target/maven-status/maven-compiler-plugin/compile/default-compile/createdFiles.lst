@@ -12,6 +12,7 @@ com\upgrad\FoodOrderingApp\api\model\CategoryDetailsResponse.class
 com\upgrad\FoodOrderingApp\api\exceptionHandler\RestExceptionHandler.class
 com\upgrad\FoodOrderingApp\api\model\RestaurantDetailsResponse.class
 com\upgrad\FoodOrderingApp\api\model\SaveAddressResponse.class
+com\upgrad\FoodOrderingApp\api\controller\CategoryController.class
 com\upgrad\FoodOrderingApp\api\model\ItemList.class
 com\upgrad\FoodOrderingApp\api\model\SignupCustomerRequest.class
 com\upgrad\FoodOrderingApp\api\model\SaveAddressRequest.class

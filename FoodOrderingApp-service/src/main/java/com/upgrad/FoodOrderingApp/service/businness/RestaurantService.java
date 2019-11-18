@@ -35,6 +35,7 @@ public class RestaurantService {
     public CategoryEntity getCategoryViaUuid(String uuid){
         return categoryDao.getCategoryViaUuid(uuid);
     }
+    public List<CategoryEntity> getAllCategories(){return categoryDao.getAllCategories();}
 
     //Category Item entity
 

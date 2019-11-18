@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
 public class CategoryDao {
@@ -23,6 +24,14 @@ public class CategoryDao {
     public CategoryEntity getCategoryViaUuid(String id){
         try{
             return entityManager.createNamedQuery("getCategoryViaUuid",CategoryEntity.class).setParameter("uuid",id).getSingleResult();
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public List<CategoryEntity> getAllCategories(){
+        try{
+            return entityManager.createNamedQuery("getAllCategories").getResultList();
         }catch (Exception e){
             e.printStackTrace();
             return null;
