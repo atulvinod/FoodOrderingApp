@@ -2,21 +2,21 @@ package com.upgrad.FoodOrderingApp.api.controller;
 
 import com.upgrad.FoodOrderingApp.api.model.*;
 import com.upgrad.FoodOrderingApp.service.businness.AddressService;
+import com.upgrad.FoodOrderingApp.service.businness.AuthenticationService;
 import com.upgrad.FoodOrderingApp.service.businness.RestaurantService;
 import com.upgrad.FoodOrderingApp.service.businness.StateService;
 import com.upgrad.FoodOrderingApp.service.entity.*;
+import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
 import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +34,9 @@ public class RestaurantController {
 
     @Autowired
     private StateService stateService;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     @RequestMapping(method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_UTF8_VALUE,path="/restaurant/name/{restaurant_name}")
     public ResponseEntity<RestaurantListResponse> getRestaurantByName(@PathVariable("restaurant_name") String restaurantName ) throws RestaurantNotFoundException {
@@ -152,8 +155,11 @@ public class RestaurantController {
             address.setPincode(fullAddress.getPincode());
             address.setId(UUID.fromString(fullAddress.getUuid()));
             address.setFlatBuildingName(fullAddress.getFlatBuilNumber());
+
             //Get the categories
             List<RestaurantCategoryEntity> restaurantCategories = restaurantService.getCategoriesViaRestaurantId(e.getRestaurantId());
+
+            //todo: fix the categories comma
             String categories = "";
             for(RestaurantCategoryEntity c : restaurantCategories){
                 CategoryEntity ce = restaurantService.getCategoryViaId(c.getCategoryId());
@@ -172,4 +178,105 @@ public class RestaurantController {
         response.setRestaurants(restaurantListForResponse);
         return new ResponseEntity<RestaurantListResponse>(response,HttpStatus.OK);
     }
+
+    @RequestMapping(method=RequestMethod.GET,produces = MediaType.APPLICATION_JSON_UTF8_VALUE,path="/api/restaurant/{restaurant_id}")
+    public ResponseEntity<RestaurantDetailsResponse> getRestaurantDetails(@RequestHeader("authorization") String authorization , @PathVariable("restaurant_id")final String restaurantId) throws AuthorizationFailedException, RestaurantNotFoundException {
+        CustomerAuthTokenEntity token = authenticationService.getToken(authorization);
+        if(token == null){
+            throw new AuthorizationFailedException("ATHR-001","Customer not logged in");
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+
+        //If the user has already logged out, then throw an exception
+        if(token.getLogoutAt() != null ){
+            if(token.getLogoutAt().isBefore(now))
+                throw new AuthorizationFailedException("ATHR-002","Customer is logged out. Log in again to access this endpoint");
+        }
+
+        //If the current time is greater than the expiry time of the token, then throw an exception
+        if(now.isAfter(token.getExpiresAt())){
+            throw new AuthorizationFailedException("ATHR-003","Your session is expired. Log in again to access this endpoint");
+        }
+
+        if(restaurantId.equals("")||restaurantId==null){
+            throw new RestaurantNotFoundException("RNF-002","Restaurant id field should not be empty");
+        }
+
+        RestaurantEntity restaurant = restaurantService.getRestaurantViaUuid(restaurantId);
+
+        if(restaurant==null){
+            throw new RestaurantNotFoundException("RNF-001","No restaurant by this id");
+        }
+
+        //Create the required response entities
+        RestaurantDetailsResponse response = new RestaurantDetailsResponse();
+        RestaurantDetailsResponseAddress restaurantAddress = new RestaurantDetailsResponseAddress();
+        RestaurantDetailsResponseAddressState restaurantDetailsResponseAddressState = new RestaurantDetailsResponseAddressState();
+
+        //Get the full address of the Restaurant
+        FullAddressEntity getRestaurantAddress = addressService.getFullAddressViaAddressId(restaurant.getAddressId().toString());
+
+        //Fetch the state from the state service and set the required feilds for the response
+        StateEntity stateEntity = stateService.getStateViaId(getRestaurantAddress.getStateId().toString());
+        restaurantDetailsResponseAddressState.setId(UUID.fromString(stateEntity.getUuid()));
+        restaurantDetailsResponseAddressState.setStateName(stateEntity.getStateName());
+
+        List<CategoryList> categoryList = new ArrayList<>();
+        List<RestaurantCategoryEntity> categoryEntities = restaurantService.getCategoriesViaRestaurantId(restaurant.getId());
+
+        for(RestaurantCategoryEntity cat : categoryEntities){
+            CategoryEntity categoryEntity = restaurantService.getCategoryViaId(cat.getCategoryId());
+            CategoryList listItem = new CategoryList();
+            listItem.setId(UUID.fromString(categoryEntity.getUuid()));
+            listItem.setCategoryName(categoryEntity.getCategoryName());
+
+            List<CategoryItemEntity> categoryItemEntities = restaurantService.getCategoryItemViaCategoryId(cat.getCategoryId());
+            List<ItemList> itemList = new ArrayList<>();
+
+            for(CategoryItemEntity c:categoryItemEntities){
+                ItemList i = new ItemList();
+                ItemEntity itemEntity = restaurantService.getItemViaId(c.getItemId());
+
+                i.setId(UUID.fromString(itemEntity.getUuid()));
+                i.setItemName(itemEntity.getItemName());
+                i.setPrice(itemEntity.getPrice());
+
+
+                ItemList.ItemTypeEnum type;
+                if(Integer.parseInt(itemEntity.getType())==1){
+                    type = ItemList.ItemTypeEnum.NON_VEG;
+                }else{
+                    type= ItemList.ItemTypeEnum.VEG;
+                }
+                i.setItemType(type);
+                itemList.add(i);
+            }
+
+            listItem.setItemList(itemList);
+            categoryList.add(listItem);
+
+        }
+
+        //Set the restaurant address feilds
+        restaurantAddress.setFlatBuildingName(getRestaurantAddress.getFlatBuilNumber());
+        restaurantAddress.setId(UUID.fromString(getRestaurantAddress.getUuid()));
+        restaurantAddress.setState(restaurantDetailsResponseAddressState);
+        restaurantAddress.setPincode(getRestaurantAddress.getPincode());
+        restaurantAddress.setLocality(getRestaurantAddress.getLocality());
+        restaurantAddress.setCity(getRestaurantAddress.getCity());
+
+        //Set response
+        response.setAddress(restaurantAddress);
+        response.setAveragePrice(restaurant.getAveragePriceForTwo());
+        response.setCustomerRating(BigDecimal.valueOf(restaurant.getCustomerRating()));
+        response.setId(UUID.fromString(restaurant.getUuid()));
+        response.setNumberCustomersRated(restaurant.getNumberOfCustomersRated());
+        response.setPhotoURL(restaurant.getPhotoUrl());
+        response.setRestaurantName(restaurant.getRestaurantName());
+        response.setCategories(categoryList);
+
+        return new ResponseEntity<RestaurantDetailsResponse>(response,HttpStatus.OK);
+
+    }
+
 }

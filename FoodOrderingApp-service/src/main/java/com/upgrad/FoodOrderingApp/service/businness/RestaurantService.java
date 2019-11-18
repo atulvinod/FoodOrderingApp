@@ -42,7 +42,7 @@ public class RestaurantService {
         return categoryItemDao.getCategoryItemViaItemId(id);
     }
 
-    public CategoryItemEntity getCategoryItemViaCategoryId(Integer id){
+    public List<CategoryItemEntity> getCategoryItemViaCategoryId(Integer id){
         return categoryItemDao.getCategoryItemViaCategoryId(id);
     }
 

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
 public class CategoryItemDao {
@@ -19,9 +20,9 @@ public class CategoryItemDao {
             return null;
         }
     }
-    public CategoryItemEntity getCategoryItemViaCategoryId(Integer id){
+    public List<CategoryItemEntity> getCategoryItemViaCategoryId(Integer id){
         try{
-            return entityManager.createNamedQuery("getCategoryItemViaCategoryId",CategoryItemEntity.class).setParameter("categoryId",id).getSingleResult();
+            return entityManager.createNamedQuery("getCategoryItemViaCategoryId",CategoryItemEntity.class).setParameter("categoryId",id).getResultList();
         }catch (Exception e){
             return null;
         }
