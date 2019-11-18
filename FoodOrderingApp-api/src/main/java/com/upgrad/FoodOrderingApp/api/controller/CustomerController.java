@@ -8,6 +8,7 @@ import com.upgrad.FoodOrderingApp.service.businness.PasswordCryptographyProvider
 import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthTokenEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.entity.PasswordStrengthService;
+import com.upgrad.FoodOrderingApp.service.exception.AuthenticationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.SignUpRestrictedException;
 import com.upgrad.FoodOrderingApp.service.exception.UpdateCustomerException;
@@ -110,7 +111,7 @@ public class CustomerController {
     }
 
     @RequestMapping(method = RequestMethod.POST,path = "/customer/login",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<LoginResponse> customerLogin(@RequestHeader("authorization") final String authorization) throws AuthorizationFailedException {
+    public ResponseEntity<LoginResponse> customerLogin(@RequestHeader("authorization") final String authorization) throws AuthorizationFailedException, AuthenticationFailedException {
 
         /**Try to decode the Base64 header, if failed , then throw an Exception*/
         String[] decodedArray;
@@ -122,7 +123,7 @@ public class CustomerController {
             decodedArray = decodedText.split(":");
 
         }catch (Exception e){
-            throw new AuthorizationFailedException("ATH-003","Incorrect format of decoded customer name and password");
+            throw new AuthenticationFailedException("ATH-003","Incorrect format of decoded customer name and password");
         }
 
         //Get the token from the authentication Service

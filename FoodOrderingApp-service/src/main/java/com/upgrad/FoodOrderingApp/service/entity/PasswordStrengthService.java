@@ -5,7 +5,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class PasswordStrengthService {
     public boolean checkPasswordStrength(String password){
-        //TODO: Check password strength
-        return true;
+
+        if (password.matches("(?=.*[0-9]).*")
+        && password.matches("(?=.*[a-z]).*")
+        && password.matches("(?=.*[A-Z]).*")
+        && password.matches("(?=.*[~!@#$%^&*()_-]).*")){
+            return true;
+        }else{
+            return false;
+        }
     }
 }
