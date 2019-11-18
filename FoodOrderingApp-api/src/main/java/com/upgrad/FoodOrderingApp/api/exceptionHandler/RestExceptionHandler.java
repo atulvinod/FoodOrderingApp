@@ -36,4 +36,9 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorResponse> restaurantNameException(UpdateCustomerException ex, WebRequest req){
         return new ResponseEntity<ErrorResponse>(new ErrorResponse().code(ex.getCode()).message(ex.getErrorMessage()),HttpStatus.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> categoryException(CategoryNotFoundException ex, WebRequest req){
+        return new ResponseEntity<ErrorResponse>(new ErrorResponse().code(ex.getCode()).message(ex.getErrorMessage()),HttpStatus.UNAUTHORIZED);
+    }
 }

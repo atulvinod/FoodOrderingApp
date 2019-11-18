@@ -83,7 +83,7 @@ public class RestaurantService {
     public RestaurantCategoryEntity getRestaurantCategoryViaRestaurantId(Integer id){
         return restaurantCategoryDao.getRestaurantCategoryViaRestaurantId(id);
     }
-    public RestaurantCategoryEntity getRestaurantCategoryViaCategoryId(Integer id){
+    public List<RestaurantCategoryEntity> getRestaurantCategoryViaCategoryId(Integer id){
         return restaurantCategoryDao.getRestaurantCategoryViaCategoryId(id);
     }
     public List<RestaurantCategoryEntity> getCategoriesViaRestaurantId(Integer id){

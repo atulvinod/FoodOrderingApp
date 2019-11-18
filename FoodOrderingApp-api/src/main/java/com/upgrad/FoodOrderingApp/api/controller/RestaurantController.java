@@ -5,6 +5,7 @@ import com.upgrad.FoodOrderingApp.service.businness.AddressService;
 import com.upgrad.FoodOrderingApp.service.businness.RestaurantService;
 import com.upgrad.FoodOrderingApp.service.businness.StateService;
 import com.upgrad.FoodOrderingApp.service.entity.*;
+import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
 import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +56,7 @@ public class RestaurantController {
 
             //Iterate over the categories and create a category string
             for(RestaurantCategoryEntity cat: categories){
+                //Todo: Implement commas seperataion
                 CategoryEntity categoryEntity = restaurantService.getCategoryViaId(cat.getCategoryId());
                 categoryStirng += (categoryEntity.getCategoryName()+" ");
 
@@ -108,4 +111,65 @@ public class RestaurantController {
         return new ResponseEntity<RestaurantListResponse>(restaurantListResponse, HttpStatus.OK);
     }
 
+    @RequestMapping(method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_UTF8_VALUE,path="/restaurant/category/{category_uuid}")
+    public ResponseEntity<RestaurantListResponse> getRestaurantByCategory(@PathVariable("category_uuid") final String categoryUuid) throws CategoryNotFoundException {
+        if(categoryUuid.equals("")||categoryUuid==null){
+            throw new CategoryNotFoundException("CNF-001","Category id feild should not be empty");
+        }
+        CategoryEntity category = restaurantService.getCategoryViaUuid(categoryUuid);
+        if(category == null){
+            throw new CategoryNotFoundException("CNF-002","No category by this id");
+        }
+
+        RestaurantListResponse response = new RestaurantListResponse();
+        List<RestaurantList> restaurantListForResponse = new ArrayList<>();
+
+        List<RestaurantCategoryEntity> restaurantsUnderTheCategory = restaurantService.getRestaurantCategoryViaCategoryId(category.getId());
+
+
+        for(RestaurantCategoryEntity e : restaurantsUnderTheCategory){
+            RestaurantEntity restaurant = restaurantService.getRestaurantViaId(e.getRestaurantId());
+
+            RestaurantList item = new RestaurantList();
+
+            item.setId(UUID.fromString(restaurant.getUuid()));
+            item.setNumberCustomersRated(restaurant.getNumberOfCustomersRated());
+            item.setRestaurantName(restaurant.getRestaurantName());
+            item.setPhotoURL(restaurant.getPhotoUrl());
+            item.setAveragePrice(restaurant.getAveragePriceForTwo());
+            item.setCustomerRating(BigDecimal.valueOf(restaurant.getCustomerRating()));
+
+            RestaurantDetailsResponseAddress address = new RestaurantDetailsResponseAddress();
+
+            FullAddressEntity fullAddress = addressService.getFullAddressViaAddressId(restaurant.getAddressId().toString());
+            StateEntity state = stateService.getStateViaId(fullAddress.getStateId().toString());
+            RestaurantDetailsResponseAddressState addressState = new RestaurantDetailsResponseAddressState();
+            addressState.setStateName(state.getStateName());
+            addressState.setId(UUID.fromString(state.getUuid()));
+
+            address.setState(addressState);
+            address.setLocality(fullAddress.getLocality());
+            address.setPincode(fullAddress.getPincode());
+            address.setId(UUID.fromString(fullAddress.getUuid()));
+            address.setFlatBuildingName(fullAddress.getFlatBuilNumber());
+            //Get the categories
+            List<RestaurantCategoryEntity> restaurantCategories = restaurantService.getCategoriesViaRestaurantId(e.getRestaurantId());
+            String categories = "";
+            for(RestaurantCategoryEntity c : restaurantCategories){
+                CategoryEntity ce = restaurantService.getCategoryViaId(c.getCategoryId());
+                categories += (ce.getCategoryName()+" ");
+
+            }
+
+
+            item.setCategories(categories);
+            item.setAddress(address);
+
+            restaurantListForResponse.add(item);
+
+        }
+
+        response.setRestaurants(restaurantListForResponse);
+        return new ResponseEntity<RestaurantListResponse>(response,HttpStatus.OK);
+    }
 }

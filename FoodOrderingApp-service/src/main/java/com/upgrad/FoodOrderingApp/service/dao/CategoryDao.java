@@ -16,6 +16,7 @@ public class CategoryDao {
         try{
             return entityManager.createNamedQuery("getCategoryViaId",CategoryEntity.class).setParameter("id",id).getSingleResult();
         }catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }
@@ -23,6 +24,7 @@ public class CategoryDao {
         try{
             return entityManager.createNamedQuery("getCategoryViaUuid",CategoryEntity.class).setParameter("uuid",id).getSingleResult();
         }catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }

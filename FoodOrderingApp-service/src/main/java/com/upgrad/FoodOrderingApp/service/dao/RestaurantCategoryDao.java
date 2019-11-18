@@ -17,13 +17,15 @@ public class RestaurantCategoryDao {
         try{
             return entityManager.createNamedQuery("getRestaurantCategoryViaRestaurantId",RestaurantCategoryEntity.class).setParameter("restaurantId",id).getSingleResult();
         }catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }
-    public RestaurantCategoryEntity getRestaurantCategoryViaCategoryId(Integer id){
+    public List<RestaurantCategoryEntity> getRestaurantCategoryViaCategoryId(Integer id){
         try{
-            return entityManager.createNamedQuery("getRestaurantCategoryViaCategoryId",RestaurantCategoryEntity.class).setParameter("categoryId",id).getSingleResult();
+            return entityManager.createNamedQuery("getRestaurantCategoryViaCategoryId",RestaurantCategoryEntity.class).setParameter("id",id).getResultList();
         }catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }
@@ -31,6 +33,7 @@ public class RestaurantCategoryDao {
         try{
             return entityManager.createNamedQuery("getCategoriesViaRestaurantId",RestaurantCategoryEntity.class).setParameter("restaurantId",id).getResultList();
         }catch (Exception e){
+            e.printStackTrace();
             return null;
         }
     }
