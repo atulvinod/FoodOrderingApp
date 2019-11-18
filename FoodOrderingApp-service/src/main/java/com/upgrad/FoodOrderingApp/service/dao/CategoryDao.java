@@ -23,7 +23,7 @@ public class CategoryDao {
     }
     public CategoryEntity getCategoryViaUuid(String id){
         try{
-            return entityManager.createNamedQuery("getCategoryViaUuid",CategoryEntity.class).setParameter("uuid",id).getSingleResult();
+            return entityManager.createNamedQuery("getFullCategoryViaUuid",CategoryEntity.class).setParameter("uuid",id).getSingleResult();
         }catch (Exception e){
             e.printStackTrace();
             return null;
