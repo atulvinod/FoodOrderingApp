@@ -226,7 +226,6 @@ public class CustomerController {
         response.setStatus("PASSWORD SUCCESSFULLY CHANGED");
         response.setId(customer.getUuid());
 
-        //TODO: Check if the Http Status is correct
         return new ResponseEntity<UpdatePasswordResponse>(response,HttpStatus.CREATED);
     }
 }

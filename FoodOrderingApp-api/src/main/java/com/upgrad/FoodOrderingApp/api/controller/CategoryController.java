@@ -31,6 +31,7 @@ public class CategoryController {
         CategoriesListResponse response = new CategoriesListResponse();
         List<CategoryEntity> categoryEntityList = restaurantService.getAllCategories();
         List<CategoryListResponse> responseList = new ArrayList<>();
+        //Loop through the category list fetched via the service and convert them accroding to the response
     for(CategoryEntity c : categoryEntityList){
         CategoryListResponse item = new CategoryListResponse();
         item.setCategoryName(c.getCategoryName());
@@ -43,22 +44,35 @@ public class CategoryController {
 
     @RequestMapping(method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_UTF8_VALUE,path="/category/{categoryuuid}")
     public ResponseEntity<CategoryDetailsResponse> getCategoryById(@PathVariable("categoryuuid") final String uuid) throws CategoryNotFoundException {
+       //Check if the category feild is empty
         if(uuid==null||uuid.equals("")){
             throw new CategoryNotFoundException("CNF-001","Category field should not be empty");
         }
+
+        //Create a new response
         CategoryDetailsResponse response = new CategoryDetailsResponse();
-        System.out.print(uuid);
+//        System.out.print(uuid);
         List<ItemList> responseList = new ArrayList<>();
+
+        //Fetch the category from the service
         CategoryEntity category = restaurantService.getCategoryViaUuid(uuid);
+
+        //Throw error if the cateogry is not present
         if(category==null){
             throw new CategoryNotFoundException("CNF-002","No category by this id");
         }
 
+        //Get the category item from the service
         List<CategoryItemEntity> categoryItemEntities = restaurantService.getCategoryItemViaCategoryId(category.getId());
+
+        // Loop through the category items
         for(CategoryItemEntity e : categoryItemEntities){
+            //Fetch the item entity using the category item id
             ItemEntity itemEntity = restaurantService.getItemViaId(e.getItemId());
             ItemList item = new ItemList();
             ItemList.ItemTypeEnum type;
+
+            //Set the item type
             if(Integer.parseInt(itemEntity.getType())==1){
                 type = ItemList.ItemTypeEnum.NON_VEG;
             }else{

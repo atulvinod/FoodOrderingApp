@@ -29,6 +29,9 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/")
 public class AddressController {
+
+
+    //Import the services required for the functionality
     @Autowired
     private AuthenticationService authenticationService;
 
@@ -45,6 +48,7 @@ public class AddressController {
     @RequestMapping(method = RequestMethod.POST,path="/address",produces = MediaType.APPLICATION_JSON_UTF8_VALUE,consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SaveAddressResponse> saveAddress(@RequestHeader("authorization") String authorization, final SaveAddressRequest addressRequest) throws AuthorizationFailedException, AddressNotFoundException, SaveAddressException {
         CustomerAuthTokenEntity authTokenEntity = authenticationService.getToken(authorization);
+        //Check if the customer is not logged in and check if the token hasnt expired
         if(authTokenEntity == null){
             throw new AuthorizationFailedException("ATHR-001","Customer is not Logged in");
         }
@@ -56,6 +60,7 @@ public class AddressController {
 
         }
 
+        //Check if any of the feilds are empty
         if(addressRequest.getFlatBuildingName()=="" ||
           addressRequest.getPincode()==""||
           addressRequest.getCity()==""||
@@ -73,14 +78,16 @@ public class AddressController {
             throw new SaveAddressException("SAR-002","Invalid pincode");
         }
 
-
+        //get the state
         StateEntity stateEntity = stateService.getState(addressRequest.getStateUuid());
         if(stateEntity==null){
             throw new AddressNotFoundException("ANF-001","No state by this id");
         }
 
+        //Create a full address entity
         FullAddressEntity address = new FullAddressEntity();
 
+        //Set the feilds of the entity
         address.setUuid(UUID.randomUUID().toString());
         address.setCity(addressRequest.getCity());
         address.setFlatBuilNumber(addressRequest.getFlatBuildingName());
@@ -88,11 +95,13 @@ public class AddressController {
         address.setPincode(addressRequest.getPincode());
         address.setStateId(stateEntity.getId());
 
+        //Fetch the persited entity form the service
         FullAddressEntity createdAddress = customerService.createAddress(address);
         SaveAddressResponse response = new SaveAddressResponse();
         response.setId(createdAddress.getUuid());
         response.setStatus("ADDRESS SUCCESSFULLY REGISTERED");
 
+        //Create a customer Address Entity
         CustomerAddressEntity customerAddressEntity = new CustomerAddressEntity();
         customerAddressEntity.setCustomerId(authTokenEntity.getCustomerId());
         customerAddressEntity.setAddressId(createdAddress.getId());
@@ -106,7 +115,7 @@ public class AddressController {
     @RequestMapping(method=RequestMethod.DELETE,path="/address/{address_uuid}",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<DeleteAddressResponse> deleteAddress(@RequestHeader("authorization") String authorization,final String addressUuid) throws AuthorizationFailedException {
         CustomerAuthTokenEntity token = authenticationService.getToken(authorization);
-
+        //Check if the token is valid
         if(token == null){
             throw new AuthorizationFailedException("ATHR-001","Customer is not Logged in");
         }
@@ -133,7 +142,7 @@ public class AddressController {
         response.setId(UUID.fromString(fullAddress.getUuid()));
         response.setStatus("ADDRESS DELETED SUCCESSFULLY");
 
-        //TODO: Check response code
+
         return new ResponseEntity<DeleteAddressResponse>(response,HttpStatus.OK);
 
 
@@ -158,10 +167,12 @@ public class AddressController {
         List<AddressList> addressList = new ArrayList<>();
 
         List<CustomerAddressEntity> customerAddressEntities = addressService.getAllCustomerAddresses(token.getCustomerId().toString());
+        //Get the addresses that are uploaded by the customer, convert them into the objects that are required for reponse
         for(CustomerAddressEntity e:customerAddressEntities){
 
             AddressList address = new AddressList();
 
+            //Get the full address
             FullAddressEntity fullAddressEntity = addressService.getFullAddressViaAddressId(e.getAddressId().toString());
             address.setId(UUID.fromString(fullAddressEntity.getUuid()));
             address.setPincode(fullAddressEntity.getPincode());

@@ -221,10 +221,14 @@ public class RestaurantController {
         restaurantDetailsResponseAddressState.setId(UUID.fromString(stateEntity.getUuid()));
         restaurantDetailsResponseAddressState.setStateName(stateEntity.getStateName());
 
+        //Create a category list
         List<CategoryList> categoryList = new ArrayList<>();
         List<RestaurantCategoryEntity> categoryEntities = restaurantService.getCategoriesViaRestaurantId(restaurant.getId());
 
+        //Cycle through the restaurant category list
         for(RestaurantCategoryEntity cat : categoryEntities){
+
+            //get the category entity using the id of the restaurant category
             CategoryEntity categoryEntity = restaurantService.getCategoryViaId(cat.getCategoryId());
             CategoryList listItem = new CategoryList();
             listItem.setId(UUID.fromString(categoryEntity.getUuid()));
@@ -233,6 +237,7 @@ public class RestaurantController {
             List<CategoryItemEntity> categoryItemEntities = restaurantService.getCategoryItemViaCategoryId(cat.getCategoryId());
             List<ItemList> itemList = new ArrayList<>();
 
+            // Fetch the item entities for each category entity
             for(CategoryItemEntity c:categoryItemEntities){
                 ItemList i = new ItemList();
                 ItemEntity itemEntity = restaurantService.getItemViaId(c.getItemId());
